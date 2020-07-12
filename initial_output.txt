@@ -1,0 +1,33 @@
+Preprocessing: 100%|##########| 943000/943000 [00:08<00:00, 105197.72it/s]
+Preprocessing: 100%|##########| 132062/132062 [00:00<00:00, 148936.92it/s]
+Preprocessing: 100%|##########| 12578/12578 [00:00<00:00, 147822.58it/s]2020-03-03 23:46:22.495652: I tensorflow/core/platform/cpu_feature_guard.cc:142] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX AVX2
+2020-03-03 23:46:22.498890: I tensorflow/stream_executor/platform/default/dso_loader.cc:42] Successfully opened dynamic library nvcuda.dll
+2020-03-03 23:46:22.588606: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1640] Found device 0 with properties:
+name: GeForce GTX 1080 Ti major: 6 minor: 1 memoryClockRate(GHz): 1.582
+pciBusID: 0000:01:00.0
+2020-03-03 23:46:22.588910: I tensorflow/stream_executor/platform/default/dlopen_checker_stub.cc:25] GPU libraries are statically linked, skip dlopen check.
+2020-03-03 23:46:22.590181: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1763] Adding visible gpu devices: 0
+2020-03-03 23:46:23.049461: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1181] Device interconnect StreamExecutor with strength 1 edge matrix:
+2020-03-03 23:46:23.049722: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1187]      0
+2020-03-03 23:46:23.049848: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1200] 0:   N
+2020-03-03 23:46:23.051532: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1326] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 8776 MB memory) -> physical GPU (device: 0, name: GeForce GTX 1080 Ti, pci bus id: 0000:01:00.0, compute capability: 6.1)
+Preprocess data...
+Loading data...
+Reading tier train
+Reading tier val
+Reading tier testdev
+took 67.96 seconds
+Loading word vectors...
+2837
+q 2957
+a 1845
+3309
+took 33.08 seconds
+Vectorizing data...
+took 7.36 seconds
+answerWordsNum
+1845
+took 108.41 seconds
+Building model...
+took 4.68 seconds
+Initializing weights

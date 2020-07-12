@@ -1073,7 +1073,7 @@ class Preprocesser(object):
             counter = 0
             if not random:
                 wordVectors = {}
-                with open(config.wordVectorsFile, "r") as inFile:
+                with open(config.wordVectorsFile, "r", encoding="utf8") as inFile:
                     for line in inFile:
                         line = line.strip().split()
                         word = line[0].lower()
