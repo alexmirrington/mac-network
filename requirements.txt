@@ -4,7 +4,7 @@ Pillow
 scipy
 torchvision
 h5py
-tensorflow
+tensorflow-gpu
 tqdm
 termcolor
 matplotlib
