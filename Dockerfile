@@ -5,5 +5,6 @@ RUN curl http://downloads.cs.stanford.edu/nlp/data/glove.6B.zip -o glove.zip && 
     mkdir -p data/glove && \
     unzip glove.zip -d data/glove && \
     rm glove.zip
-COPY . .
+COPY requirements.txt .
 RUN pip install -r requirements.txt
+COPY . .
