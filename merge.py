@@ -8,12 +8,20 @@ from tqdm import tqdm
 import argparse
 import h5py 
 import json
+import os.path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', type = str, help = "features directory name")
+parser.add_argument('--cache', action='store_true', help = "Used existing features if they exist already.")
 parser.add_argument('--chunksNum', type = int, default = 16, help = "number of file chunks")
 parser.add_argument('--chunkSize', type = int, default = 10000, help = "file chunk size")
 args = parser.parse_args()
+
+# Check if files exist and skip if --cache is supplied.
+if os.path.exists("data/gqa_{name}.h5".format(name=args.name)) \
+		and os.path.exists("data/{name}/gqa_{name}_info.json".format(name = args.name)) \
+		and args.cache:
+	exit(0)
 
 print("Merging features file for gqa_{}. This may take a while (and may be 0 for some time).".format(args.name))
 
@@ -23,11 +31,10 @@ spec = {
 	"objects": {"features": (148855, 100, 2048),
 				"bboxes": (148855, 100, 4)}
 }
-
 # Merge hdf5 files
 lengths = [0]
 with h5py.File("data/gqa_{name}.h5".format(name = args.name)) as out:
-	datasets  = {}
+	datasets = {}
 	for dname in spec[args.name]:
 		datasets[dname] = out.create_dataset(dname, spec[args.name][dname])
 

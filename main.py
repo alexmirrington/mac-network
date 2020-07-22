@@ -843,6 +843,6 @@ def main():
         print(bcolored("Done!","white"))
 
 if __name__ == '__main__':
-    parseArgs()    
+    parseArgs()
     loadDatasetConfig[config.dataset]()        
     main()
