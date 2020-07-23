@@ -1,109 +1,138 @@
-import matplotlib
-matplotlib.use('Agg')
-
+import argparse
 import json
-import pandas
-import argparse 
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns; sns.set()
-from scipy.misc import imread, imresize
-from matplotlib.colors import Normalize, LinearSegmentedColormap
 import os
 
-flatten = lambda ll: [e for l in ll for e in l]
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas
+import seaborn as sns
+from scipy.misc import imread
+
+matplotlib.use("Agg")
+sns.set()
+
+
+def flatten(ll):
+    return [e for x in ll for e in x]
+
 
 parser = argparse.ArgumentParser()
 
 # experiment settings
-parser.add_argument("--tier",  default = "val", choices = ["train", "val", "test"], type = str)
-parser.add_argument("--expName",  default = "experiment", type = str)
+parser.add_argument("--tier", default="val", choices=["train", "val", "test"], type=str)
+parser.add_argument("--expName", default="experiment", type=str)
 
 # plotting
-parser.add_argument("--cmap", default = "custom", type = str) # "gnuplot2", "GreysT" 
+parser.add_argument("--cmap", default="custom", type=str)  # "gnuplot2", "GreysT"
 
-parser.add_argument("--trans", help = "transpose question attention", action = "store_true")
-parser.add_argument("--sa", action = "store_true")
-parser.add_argument("--gate", action = "store_true")
+parser.add_argument("--trans", help="transpose question attention", action="store_true")
+parser.add_argument("--sa", action="store_true")
+parser.add_argument("--gate", action="store_true")
 
 # filtering
-parser.add_argument("--instances", nargs = "*", type = int)
-parser.add_argument("--maxNum", default = 0, type = int)
+parser.add_argument("--instances", nargs="*", type=int)
+parser.add_argument("--maxNum", default=0, type=int)
 
-parser.add_argument("--filter", default = [], nargs = "*", choices = ["mod", "length", "field"])
-parser.add_argument("--filterMod", action = "store_true")
-parser.add_argument("--filterLength", type = int) # 19
-parser.add_argument("--filterField", type = str)
-parser.add_argument("--filterIn", action = "store_true")
-parser.add_argument("--filterList", nargs = "*") # ["how many", "more"], numbers
+parser.add_argument(
+    "--filter", default=[], nargs="*", choices=["mod", "length", "field"]
+)
+parser.add_argument("--filterMod", action="store_true")
+parser.add_argument("--filterLength", type=int)  # 19
+parser.add_argument("--filterField", type=str)
+parser.add_argument("--filterIn", action="store_true")
+parser.add_argument("--filterList", nargs="*")  # ["how many", "more"], numbers
 
 args = parser.parse_args()
 
-isRight = lambda instance: instance["answer"] == instance["prediction"]
-isRightStr = lambda instance: "RIGHT" if isRight(instance) else "WRONG"
+
+def isRight(instance):
+    return instance["answer"] == instance["prediction"]
+
+
+def isRightStr(instance):
+    return "RIGHT" if isRight(instance) else "WRONG"
+
 
 # files
 def make_sure_dir(path):
     dirname = os.path.dirname(path)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-        
+
+
 # jsonFilename = "valHPredictions.json" if args.humans else "valPredictions.json"
-imagesDir = "./data/images" # suppose images of GQA are in this directory
+imagesDir = "./data/images"  # suppose images of GQA are in this directory
 outputDir = "./preds/{expName}/{tier}Images".format(
-    tier = args.tier,
-    expName = args.expName)
+    tier=args.tier, expName=args.expName
+)
 make_sure_dir(outputDir)
-    
+
 dataFile = "./preds/{expName}/{tier}Predictions-{expName}.json".format(
-    tier = args.tier,
-    expName = args.expName)
+    tier=args.tier, expName=args.expName
+)
 
-inImgName = lambda instance: os.path.join(imagesDir, "{index}.jpg".format(index=instance["imageId"]["id"]))
 
-outImgAttName = lambda instance, j: os.path.join(outputDir, "{id}/Img_{step}.png".format(
-    id = instance["index"], 
-    step = j + 1))
+def inImgName(instance):
+    return os.path.join(
+        imagesDir, "{index}.jpg".format(index=instance["imageId"]["id"])
+    )
 
-outTableAttName = lambda instance, name: os.path.join(outputDir, "{id}/{tableName}_{right}{orientation}.png".format(
-    id = instance["index"], 
-    tableName = name, 
-    right = isRightStr(instance),
-    orientation = "_t" if args.trans else ""))
+
+def outImgAttName(instance, j):
+    return os.path.join(
+        outputDir, "{id}/Img_{step}.png".format(id=instance["index"], step=j + 1)
+    )
+
+
+def outTableAttName(instance, name):
+    return os.path.join(
+        outputDir,
+        "{id}/{tableName}_{right}{orientation}.png".format(
+            id=instance["index"],
+            tableName=name,
+            right=isRightStr(instance),
+            orientation="_t" if args.trans else "",
+        ),
+    )
+
 
 # plotting
-imageDims = (10,10)
-figureImageDims = (2,3)
-figureTableDims = (5,4)
+imageDims = (10, 10)
+figureImageDims = (2, 3)
+figureTableDims = (5, 4)
 fontScale = 1
 
-# set transparent mask for low attention areas  
+# set transparent mask for low attention areas
 # cdict = plt.get_cmap("gnuplot2")._segmentdata
-cdict = {"red": ((0.0, 0.0, 0.0), (0.6, 0.8, 0.8), (1.0, 1, 1)), 
-    "green": ((0.0, 0.0, 0.0), (0.6, 0.8, 0.8), (1.0, 1, 1)), 
-    "blue": ((0.0, 0.0, 0.0), (0.6, 0.8, 0.8), (1.0, 1, 1))}
-cdict["alpha"] = ((0.0, 0.35, 0.35),
-                  (1.0,0.65, 0.65))
-plt.register_cmap(name = "custom", data = cdict)
+cdict = {
+    "red": ((0.0, 0.0, 0.0), (0.6, 0.8, 0.8), (1.0, 1, 1)),
+    "green": ((0.0, 0.0, 0.0), (0.6, 0.8, 0.8), (1.0, 1, 1)),
+    "blue": ((0.0, 0.0, 0.0), (0.6, 0.8, 0.8), (1.0, 1, 1)),
+}
+cdict["alpha"] = ((0.0, 0.35, 0.35), (1.0, 0.65, 0.65))
+plt.register_cmap(name="custom", data=cdict)
+
 
 def savePlot(fig, fileName):
     make_sure_dir(fileName)
-    plt.savefig(fileName, dpi = 720)
-    plt.close(fig) 
+    plt.savefig(fileName, dpi=720)
+    plt.close(fig)
     del fig
 
+
 def filter(instance):
-    if "length" in args.filter: 
+    if "length" in args.filter:
         if len(instance["question"].split(" ")) > args.filterLength:
-             return True
+            return True
 
     if "field" in args.filter:
-        if args.filterIn:  
+        if args.filterIn:
             if not (instance[args.filterField] in args.filterList):
                 return True
         else:
-            if not any((l in instance[args.filterField]) for l in args.filterList):
-                return True            
+            if not any((x in instance[args.filterField]) for x in args.filterList):
+                return True
 
     if "mod" in args.filter:
         if (not isRight(instance)) and args.filterMod:
@@ -114,6 +143,7 @@ def filter(instance):
 
     return False
 
+
 def showImgAtt(img, instance, step, ax):
     dx, dy = 0.05, 0.05
     x = np.arange(-1.5, 1.5, dx)
@@ -123,9 +153,13 @@ def showImgAtt(img, instance, step, ax):
 
     ax.cla()
 
-    img1 = ax.imshow(img, interpolation = "nearest", extent = extent)
-    ax.imshow(np.array(instance["attentions"]["kb"][step]).reshape(imageDims), cmap = plt.get_cmap(args.cmap), 
-        interpolation = "bicubic", extent = extent)
+    ax.imshow(img, interpolation="nearest", extent=extent)
+    ax.imshow(
+        np.array(instance["attentions"]["kb"][step]).reshape(imageDims),
+        cmap=plt.get_cmap(args.cmap),
+        interpolation="bicubic",
+        extent=extent,
+    )
 
     ax.set_axis_off()
     plt.axis("off")
@@ -137,17 +171,18 @@ def showImgAtts(instance):
     img = imread(inImgName(instance))
 
     length = len(instance["attentions"]["kb"])
-    
+
     # show images
     for j in range(length):
         fig, ax = plt.subplots()
         fig.set_figheight(figureImageDims[0])
-        fig.set_figwidth(figureImageDims[1])              
-        
+        fig.set_figwidth(figureImageDims[1])
+
         showImgAtt(img, instance, j, ax)
-        
-        plt.subplots_adjust(bottom = 0, top = 1, left = 0, right = 1)
+
+        plt.subplots_adjust(bottom=0, top=1, left=0, right=1)
         savePlot(fig, outImgAttName(instance, j))
+
 
 def showTableAtt(instance, table, x, y, name):
     # if args.trans:
@@ -157,34 +192,42 @@ def showTableAtt(instance, table, x, y, name):
     # xx = np.arange(0, len(x), 1)
     # yy = np.arange(0, len(y), 1)
     # extent2 = np.min(xx), np.max(xx), np.min(yy), np.max(yy)
-    
-    fig2, bx = plt.subplots(1, 1) # figsize = figureTableDims
+
+    fig2, bx = plt.subplots(1, 1)  # figsize = figureTableDims
     bx.cla()
 
-    sns.set(font_scale = fontScale)
+    sns.set(font_scale=fontScale)
 
     if args.trans:
         table = np.transpose(table)
         x, y = y, x
-    
-    tableMap = pandas.DataFrame(data = table, index = x, columns = y)
-    
-    bx = sns.heatmap(tableMap, cmap = "Purples", cbar = False, linewidths = .5, linecolor = "gray", square = True)
-    
+
+    tableMap = pandas.DataFrame(data=table, index=x, columns=y)
+
+    bx = sns.heatmap(
+        tableMap,
+        cmap="Purples",
+        cbar=False,
+        linewidths=0.5,
+        linecolor="gray",
+        square=True,
+    )
+
     # x ticks
     if args.trans:
         bx.xaxis.tick_top()
     locs, labels = plt.xticks()
     if args.trans:
-        plt.setp(labels, rotation = 0)
+        plt.setp(labels, rotation=0)
     else:
-        plt.setp(labels, rotation = 60)
+        plt.setp(labels, rotation=60)
 
     # y ticks
     locs, labels = plt.yticks()
-    plt.setp(labels, rotation = 0)
+    plt.setp(labels, rotation=0)
 
     savePlot(fig2, outTableAttName(instance, name))
+
 
 def main():
     with open(dataFile) as inFile:
@@ -196,7 +239,7 @@ def main():
     if args.instances is None:
         args.instances = range(len(results))
 
-    for i in args.instances:        
+    for i in args.instances:
         if filter(results[i]):
             continue
 
@@ -205,26 +248,26 @@ def main():
         count += 1
 
         length = len(results[i]["attentions"]["kb"])
-        #import pdb
-        #pdb.set_trace()
+        # import pdb
+        # pdb.set_trace()
         showImgAtts(results[i])
 
         iterations = range(1, length + 1)
         questionList = results[i]["question"]
-        table = np.array(results[i]["attentions"]["question"])[:,:len(questionList)]        
+        table = np.array(results[i]["attentions"]["question"])[:, : len(questionList)]
         showTableAtt(results[i], table, iterations, questionList, "text")
 
         if args.sa:
             iterations = range(length)
             sa = np.zeros((length, length))
             for i in range(length):
-                for j in range(i+1):
+                for j in range(i + 1):
                     sa[i][j] = results[i]["attentions"]["self"][i][j]
-            
-            showTableAtt(results[i], sa[i][j], iterations, iterations, "sa")                    
+
+            showTableAtt(results[i], sa[i][j], iterations, iterations, "sa")
 
         print(i)
-        print("id:", results[i]["index"])        
+        print("id:", results[i]["index"])
         print("img:", results[i]["imageId"])
         print("Q:", results[i]["question"])
         print("G:", results[i]["answer"])
@@ -235,6 +278,7 @@ def main():
             print(results[i]["attentions"]["gate"])
 
         print("_" * 72)
+
 
 if __name__ == "__main__":
     main()

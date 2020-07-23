@@ -9,7 +9,7 @@
 This is the implementation of [Compositional Attention Networks for Machine Reasoning](https://arxiv.org/pdf/1803.03067.pdf) (ICLR 2018) on two visual reasoning datasets: [CLEVR dataset](http://cs.stanford.edu/people/jcjohns/clevr/) and the ***New*** [***GQA dataset***](https://visualreasoning.net) ([CVPR 2019](https://visualreasoning.net/gqaPaper.pdf)). We propose a fully differentiable model that learns to perform multi-step reasoning.
 See our [website](https://cs.stanford.edu/people/dorarad/mac/) and [blogpost](https://cs.stanford.edu/people/dorarad/mac/blog.html) for more information about the model!
 
-This branch also includes an extension of the [MAC network](https://arxiv.org/pdf/1803.03067.pdf) to work on the <b>[the GQA dataset](https://www.visualreasoning.net)</b>. GQA is a new dataset for real-world visual reasoning, offrering 20M diverse multi-step questions, all come along with short programs that represent their semantics, and visual pointers from words to the corresponding image regions. Here we extend the MAC network to work over VQA and GQA, and provide multiple baselines as well. 
+This branch also includes an extension of the [MAC network](https://arxiv.org/pdf/1803.03067.pdf) to work on the <b>[the GQA dataset](https://www.visualreasoning.net)</b>. GQA is a new dataset for real-world visual reasoning, offrering 20M diverse multi-step questions, all come along with short programs that represent their semantics, and visual pointers from words to the corresponding image regions. Here we extend the MAC network to work over VQA and GQA, and provide multiple baselines as well.
 
 MAC is a fully differentiable model that learns to perform multi-step reasoning. See our [website](https://cs.stanford.edu/people/dorarad/mac/) and [blogpost](https://cs.stanford.edu/people/dorarad/mac/blog.html) for more information about the model, and visit the [GQA website](https://www.visualreasoning.net) for all information about the new dataset, including examples, visualizations, paper and slides.
 
@@ -103,8 +103,8 @@ Note: `data.zip` matches the official dataset at [`visualreasoning.net`](https:/
 Both spatial ResNet-101 features as well as object-based faster-RCNN features are available for the GQA train, val, and test images. Download, extract and merge the features through the following commands:
 
 ```bash
-python merge.py --name spatial 
-python merge.py --name objects 
+python merge.py --name spatial
+python merge.py --name objects
 ```
 
 To extract features for CLEVR:
@@ -113,7 +113,7 @@ python extract_features.py --input_image_dir CLEVR_v1/images/train --output_h5_f
 python extract_features.py --input_image_dir CLEVR_v1/images/val --output_h5_file CLEVR_v1/data/val.h5 --batch_size 32
 python extract_features.py --input_image_dir CLEVR_v1/images/test --output_h5_file CLEVR_v1/data/test.h5 --batch_size 32
 
-## Training 
+## Training
 To train the model, run the following command:
 
 ### GQA
@@ -130,15 +130,15 @@ python main.py --expName "clevrExperiment" --train --testedNum 10000 --epochs 25
 
 First, the program preprocesses the GQA questions. It tokenizes them and maps them to integers to prepare them for the network. It then stores a JSON with that information about them as well as word-to-integer dictionaries in the `data` directory.
 
-Then, the program trains the model. Weights are saved by default to `./weights/{expName}` and statistics about the training are collected in `./results/{expName}`, where `expName` is the name we choose to give to the current experiment. 
+Then, the program trains the model. Weights are saved by default to `./weights/{expName}` and statistics about the training are collected in `./results/{expName}`, where `expName` is the name we choose to give to the current experiment.
 
 Here we perform training on the balanced 1M subset of the GQA dataset, rather than the full (unbalanced) training set (14M). To train on the whole dataset add the following flag: `--dataSubset all`.
 
 ### Notes
 - The number of examples used for training and evaluation can be set by `--trainedNum` and `--testedNum` respectively.
-- You can use the `-r` flag to restore and continue training a previously pre-trained model. 
+- You can use the `-r` flag to restore and continue training a previously pre-trained model.
 - We recommend you to try out varying the number of MAC cells used in the network through the `--netLength` option to explore different lengths of reasoning processes.
-- Good lengths for GQA are in the range of 2-6. 
+- Good lengths for GQA are in the range of 2-6.
 
 See [`config.py`](config.py) for further available options (Note that some of them are still in an experimental stage).
 
@@ -167,7 +167,7 @@ See [`config.py`](config.py) for further available options (Note that some of th
 
 ## Evaluation
 
-To evaluate the trained model, and get predictions and attention maps, run the following: 
+To evaluate the trained model, and get predictions and attention maps, run the following:
 
 ```bash
 python main.py --expName "gqaExperiment" --finalTest --testedNum 10000 --netLength 4 -r --getPreds --getAtt @configs/gqa/gqa.txt
@@ -184,7 +184,7 @@ To be able to participate in the [GQA challenge](https://visualreasoning.net/cha
 ### GQA
 
 ```bash
-python main.py --expName "gqaExperiment" --finalTest --test --testAll --getPreds --netLength 4 -r --submission --getPreds @configs/gqa/gqa.txt 
+python main.py --expName "gqaExperiment" --finalTest --test --testAll --getPreds --netLength 4 -r --submission --getPreds @configs/gqa/gqa.txt
 ```
 Then you'll be able to find the predictions needed to be submitted at the `preds` directory, which you can then go ahead and submit to the challenge! Best of Luck!
 
@@ -198,7 +198,7 @@ python visualization.py --expName "clevrExperiment" --tier val
 
 (Tier can be set to `train` or `test` as well). The script supports filtering of the visualized questions by various ways. See [`visualization.py`](visualization.py) for further details.
 
-To get more interpretable visualizations, it is highly recommended to reduce the number of cells to 4-8 (`--netLength`). Using more cells allows the network to learn more effective ways to approach the task but these tend to be less interpretable compared to a shorter networks (with less cells).  
+To get more interpretable visualizations, it is highly recommended to reduce the number of cells to 4-8 (`--netLength`). Using more cells allows the network to learn more effective ways to approach the task but these tend to be less interpretable compared to a shorter networks (with less cells).
 
 Optionally, to make the image attention maps look a little bit nicer, you can do the following (using [imagemagick](https://www.imagemagick.org)):
 
