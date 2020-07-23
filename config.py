@@ -141,6 +141,7 @@ def parseArgs():
     parser.add_argument("--generatedPrefix", default = "gen", type = str,           help = "prefix for generated data files") 
     parser.add_argument("--valFilenames",    default = [], nargs = "*", type = str) 
     parser.add_argument("--featureType",     default = "resnet", type = str,   help = "features type")
+    # resnet101_512x128, norm_400x100, none_80x20, normPerImage_80x20, norm_80x20
     
     parser.add_argument("--imageDims",    default = [100, 2048], nargs = "*", type = int) # [14, 14, 2048]   
     parser.add_argument("--imageObjects", action = "store_true")    
