@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os.path
 import warnings
 
 import h5py
@@ -13,9 +14,31 @@ warnings.filterwarnings("ignore", message="size changed")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--name", type=str, help="features directory name")
+parser.add_argument(
+    "--skip-if-exists",
+    type=bool,
+    action="store_true",
+    help="whether to skip feature merging if the files exist already",
+)
 parser.add_argument("--chunksNum", type=int, default=16, help="number of file chunks")
 parser.add_argument("--chunkSize", type=int, default=10000, help="file chunk size")
 args = parser.parse_args()
+
+if (
+    args.skip_if_exists
+    and os.path.exists("data/gqa_{name}.h5".format(name=args.name))
+    and os.path.exists("data/gqa_{name}_merged_info.json".format(name=args.name))
+    and all(
+        [
+            os.path.exists(
+                "data/{name}/gqa_{name}_{index}.h5".format(name=args.name, index=i)
+            )
+            for i in range(args.chunksNum)
+        ]
+    )
+):
+    print("Using existing merged features for gqa_{}.".format(args.name))
+    exit(0)
 
 print("Merging features file for gqa_{}. This may take a while.".format(args.name))
 
