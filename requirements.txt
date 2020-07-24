@@ -11,3 +11,5 @@ matplotlib
 seaborn
 pandas
 nltk
+pre-commit
+wandb
