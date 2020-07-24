@@ -16,7 +16,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--name", type=str, help="features directory name")
 parser.add_argument(
     "--skip-if-exists",
-    type=bool,
     action="store_true",
     help="whether to skip feature merging if the files exist already",
 )
@@ -50,7 +49,7 @@ spec = {
 
 # Merge hdf5 files
 lengths = [0]
-with h5py.File("data/gqa_{name}.h5".format(name=args.name)) as out:
+with h5py.File("data/gqa_{name}.h5".format(name=args.name), "a") as out:
     datasets = {}
     for dname in spec[args.name]:
         datasets[dname] = out.create_dataset(dname, spec[args.name][dname])
@@ -58,7 +57,7 @@ with h5py.File("data/gqa_{name}.h5".format(name=args.name)) as out:
     low = 0
     for i in tqdm(range(args.chunksNum)):
         with h5py.File(
-            "data/{name}/gqa_{name}_{index}.h5".format(name=args.name, index=i)
+            "data/{name}/gqa_{name}_{index}.h5".format(name=args.name, index=i), "r"
         ) as chunk:
             high = low + chunk["features"].shape[0]
 
