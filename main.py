@@ -25,6 +25,7 @@ import json
 from config import config, loadDatasetConfig, parseArgs
 from preprocess import Preprocesser, bold, bcolored, writeline, writelist
 from model import MACnet
+from collections import defaultdict
 
 ############################################# loggers #############################################
 
