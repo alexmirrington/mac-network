@@ -13,7 +13,7 @@ class Config(object):
     #  files interface
     # data files
     dataPath = ""  # dataset specific
-    datasetFilename = ""  # dataset specific
+    datasetFilenames = lambda self, tier: ""  # dataset specific
 
     # file names
     imagesFilename = "{tier}.h5"  # Images
@@ -63,9 +63,10 @@ class Config(object):
     def generatedFile(self, filename):
         return self.dataFile(self.generatedPrefix + filename)
 
-    datasetFile = lambda self, tier: self.dataFile(
-        self.datasetFilename.format(tier=tier)
-    )
+    datasetFiles = lambda self, tier: [
+        self.dataFile(fname) for fname in self.datasetFilenames(tier)
+    ]
+
     annotationsFile = lambda self, tier: self.dataFile(
         self.annotationsFilename.format(tier=tier)
     )
@@ -1212,7 +1213,7 @@ def parseArgs():
 
 def configVG():
     config.dataPath = "{dataBasedir}".format(dataBasedir=config.dataBasedir)
-    config.datasetFilename = "question_answers.json"
+    Config.datasetFilenames = lambda self, tier: ["question_answers.json"]
     config.wordVectorsFile = "data/glove.6B.{dim}d.txt".format(dim=config.wrdQEmbDim)  #
     config.wordVectorsSemanticFile = "data/glove.6B.{dim}d.txt".format(
         dim=config.semanticWordsEmbDim
@@ -1221,7 +1222,7 @@ def configVG():
 
 def configV7W():
     config.dataPath = "{dataBasedir}".format(dataBasedir=config.dataBasedir)
-    config.datasetFilename = "dataset_v7w_telling.json"
+    Config.datasetFilenames = lambda self, tier: ["dataset_v7w_telling.json"]
     config.wordVectorsFile = "data/glove.6B.{dim}d.txt".format(dim=config.wrdQEmbDim)  #
     config.wordVectorsSemanticFile = "data/glove.6B.{dim}d.txt".format(
         dim=config.semanticWordsEmbDim
@@ -1232,7 +1233,9 @@ def configCLEVR():
     config.dataPath = "{dataBasedir}/CLEVR_v1/data".format(
         dataBasedir=config.dataBasedir
     )
-    config.datasetFilename = "CLEVR_{tier}H_questions.json"
+    Config.datasetFilenames = lambda self, tier: [
+        "CLEVR_{tier}H_questions.json".format(tier=tier)
+    ]
     config.wordVectorsFile = "../CLEVR_v1/data/glove.6B.{dim}d.txt".format(
         dim=config.wrdQEmbDim
     )  #
@@ -1247,7 +1250,7 @@ def configCLEVR():
 
 def configNLVR():
     config.dataPath = "{dataBasedir}/nlvr".format(dataBasedir=config.dataBasedir)
-    config.datasetFilename = "{tier}.json"
+    Config.datasetFilenames = lambda self, tier: ["{tier}.json".format(tier=tier)]
     config.imagesFilename = "{{tier}}_{featureType}.h5".format(
         featureType=config.featureType
     )
@@ -1279,7 +1282,37 @@ def configGQA():
     config.wordVectorsFile = "data/glove.6B.{dim}d.txt".format(dim=config.wrdQEmbDim)  #
     config.wordVectorsSemanticFile = "data/glove.6B.{dim}d.txt".format(
         dim=config.semanticWordsEmbDim
-    )  #
+    )
+
+    Config.datasetFilenames = (
+        lambda self, tier: [
+            os.path.join(
+                "questions",
+                "{tier}_{dataSubset}_questions".format(
+                    tier=tier, dataSubset=config.dataSubset
+                ),
+                "{tier}_{dataSubset}_questions_{idx}.json".format(
+                    tier=tier, dataSubset=config.dataSubset, idx=i
+                ),
+            )
+            for i in range(10)
+        ]
+        if tier == "train" and config.dataSubset == "all"
+        else [
+            "questions/{tier}_{dataSubset}_questions.json".format(
+                tier=tier, dataSubset=config.dataSubset
+            )
+        ]
+    )
+    config.wordVectorsFile = "{dataBasedir}/data/glove/glove.6B.{dim}d.txt".format(
+        dataBasedir=config.dataBasedir, dim=config.wrdQEmbDim
+    )
+    config.wordVectorsSemanticFile = os.path.join(
+        config.dataBasedir,
+        "data",
+        "glove",
+        "glove.6B.{dim}d.txt".format(dim=config.semanticWordsEmbDim),
+    )
 
     config.imagesFilename = "{featureType}.h5".format(featureType=config.featureType)
 
@@ -1305,9 +1338,12 @@ def configVQA():
     config.generatedPrefix += "{ver}_{ansFormat}_".format(
         ver=dataVer, ansFormat=config.ansFormat
     )
-    config.datasetFilename = "{ver}_{ansFormat}_{{tier}}_questions.json".format(
-        ver=dataVer, ansFormat=config.ansFormat
-    )
+    Config.datasetFilenames = lambda self, tier: [
+        "{ver}_{ansFormat}_{tier}_questions.json".format(
+            ver=dataVer, ansFormat=config.ansFormat, tier=tier
+        )
+    ]
+
     config.annotationsFilename = "{ver}_{{tier}}_annotations.json".format(ver=dataVer)
     config.pairsFilename = "{ver}_{{tier}}_complementary_pairs.json".format(ver=dataVer)
     config.imagesFilename = "{{tier}}_{featureType}.h5".format(

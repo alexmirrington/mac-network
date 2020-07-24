@@ -579,14 +579,14 @@ class Preprocesser(object):
                 outFile.write(json.dumps(results))
 
     # Reads NLVR data entries and create a json dictionary.
-    def readNLVR(self, datasetFilename, instancesFilename, tier, train, imageIndex):
+    def readNLVR(self, datasetFilenames, instancesFilename, tier, train, imageIndex):
         instances = []
         i = 0
 
         if os.path.exists(instancesFilename):
             instances = self.readInstacnes(instancesFilename)
         else:
-            with open(datasetFilename, "r") as datasetFile:
+            with open(datasetFilenames[0], "r") as datasetFile:
                 for line in datasetFile:
                     instance = json.loads(line)
                     questionStr = instance["sentence"]
@@ -631,8 +631,9 @@ class Preprocesser(object):
         return instances
 
     def readVQA(
-        self, datasetFilename, instancesFilename, tier, updateVocab, imageIndex=None
+        self, datasetFilenames, instancesFilename, tier, updateVocab, imageIndex=None
     ):
+
         vocabq = set(json.load(open("newqVocabFileVQA.json")))
         vocaba = set(json.load(open("newaVocabFileVQA.json")))
         counterq = 0
@@ -645,7 +646,7 @@ class Preprocesser(object):
         if os.path.exists(instancesFilename):
             instances = self.readInstances(instancesFilename)
         else:
-            with open(datasetFilename[0], "r") as questionsFile:
+            with open(datasetFilenames[0], "r") as questionsFile:
                 questions = json.load(questionsFile)["questions"]
 
             index = 0
@@ -813,14 +814,15 @@ class Preprocesser(object):
 
     # Reads CLEVR data entries and create a json dictionary.
     def readVG(
-        self, datasetFilename, instancesFilename, tier, updateVocab, imageIndex=None
+        self, datasetFilenames, instancesFilename, tier, updateVocab, imageIndex=None
     ):
+
         instances = []
 
         if os.path.exists(instancesFilename):
             instances = self.readInstances(instancesFilename)
         else:
-            with open(datasetFilename[0], "r") as datasetFile:
+            with open(datasetFilenames[0], "r") as datasetFile:
                 data = json.load(datasetFile)
             for i in tqdm(range(len(data)), desc="Preprocessing"):
                 instance = data[i]
@@ -857,14 +859,15 @@ class Preprocesser(object):
         return instances
 
     def readV7W(
-        self, datasetFilename, instancesFilename, tier, updateVocab, imageIndex=None
+        self, datasetFilenames, instancesFilename, tier, updateVocab, imageIndex=None
     ):
+
         instances = []
 
         if os.path.exists(instancesFilename):
             instances = self.readInstances(instancesFilename)
         else:
-            with open(datasetFilename[0], "r") as datasetFile:
+            with open(datasetFilenames[0], "r") as datasetFile:
                 data = json.load(datasetFile)["images"]
             for i in tqdm(range(len(data)), desc="Preprocessing"):
                 instance = data[i]
@@ -904,14 +907,15 @@ class Preprocesser(object):
         return instances
 
     def readCLEVR(
-        self, datasetFilename, instancesFilename, tier, updateVocab, imageIndex=None
+        self, datasetFilenames, instancesFilename, tier, updateVocab, imageIndex=None
     ):
+
         instances = []
 
         if os.path.exists(instancesFilename):
             instances = self.readInstances(instancesFilename)
         else:
-            with open(datasetFilename[0], "r") as datasetFile:
+            with open(datasetFilenames[0], "r") as datasetFile:
                 data = json.load(datasetFile)["questions"]
             for i in tqdm(range(len(data)), desc="Preprocessing"):
                 instance = data[i]
@@ -962,21 +966,35 @@ class Preprocesser(object):
         return instances
 
     def readGQA(
-        self, datasetFilename, instancesFilename, tier, updateVocab, imageIndex=None
+        self, datasetFilenames, instancesFilename, tier, updateVocab, imageIndex=None
     ):
+
         instances = []
         if os.path.exists(instancesFilename):
             instances = self.readInstances(instancesFilename)
         else:
             data = []
-            datal1, datal2 = None, None
-            for vf in datasetFilename:
+            for vf in datasetFilenames:
                 with open(vf, "r") as datasetFile:
-                    data += json.load(datasetFile)["questions"]
-                    if datal1 is None:
-                        datal1 = len(data)
-                    if datal2 is None:
-                        datal2 = len(data)
+                    raw_data = json.load(datasetFile)
+                    data += [
+                        {
+                            "questionId": qid,
+                            "group": val["types"]["detailed"],
+                            "answer": val["answer"],
+                            "type": val["types"]["structural"],
+                            "fullAnswer": val["fullAnswer"],
+                            "question": val["question"],
+                            "imageId": val["imageId"],
+                            "semanticStr": val["semanticStr"]
+                            if tier not in ("train", "val")
+                            else None,
+                            "semantic": val["semantic"]
+                            if tier not in ("train", "val")
+                            else None,
+                        }
+                        for qid, val in raw_data.items()
+                    ]
 
             for i in tqdm(range(len(data)), desc="Preprocessing"):
                 instance = data[i]
@@ -984,13 +1002,13 @@ class Preprocesser(object):
                 questionStr = instance["question"]
                 question = self.processText(questionStr)
 
-                if (i < datal1) and (updateVocab or (not config.wrdEmbQUnk)):
+                if updateVocab or (not config.wrdEmbQUnk):
                     self.questionDict.addSymbols(question)
                     self.qaDict.addSymbols(question)
 
                 answer = instance.get("answer", "yes")  # DUMMY_ANSWER
 
-                if (i < datal2) and (updateVocab or (not config.wrdEmbAUnk)):
+                if updateVocab or (not config.wrdEmbQUnk):
                     self.answerDict.addSymbols(answer)
                     self.qaDict.addSymbols(answer)
 
@@ -1037,8 +1055,9 @@ class Preprocesser(object):
     """
 
     def readData(
-        self, datasetFilename, instancesFilename, tier, updateVocab, imageIndex
+        self, datasetFilenames, instancesFilename, tier, updateVocab, imageIndex
     ):
+
         # data extraction
         datasetReader = {
             "VG": self.readVG,
@@ -1050,7 +1069,7 @@ class Preprocesser(object):
         }
 
         return datasetReader[config.dataset](
-            datasetFilename, instancesFilename, tier, updateVocab, imageIndex
+            datasetFilenames, instancesFilename, tier, updateVocab, imageIndex
         )
 
     # Reads dataset tier (train, val, test) and returns the loaded instances
@@ -1058,25 +1077,15 @@ class Preprocesser(object):
     def readTier(self, tier, train):
         print("Reading tier {}".format(tier))
         imagesFilename = config.imagesFile(tier)
-        if tier == "val" and config.valFilenames != []:
-            datasetFilename = [config.datasetFile(tier)] + [
-                config.dataFile(vf) for vf in config.valFilenames
-            ]
-            instancesFilename = config.instancesFile("finalspecialVallls")
-        elif tier == "submission":
-            datasetFilename = [config.dataFile("all_submission_data.json")]
-            instancesFilename = config.instancesFile(tier)
-        else:
-            datasetFilename = [config.datasetFile(tier)]
-            instancesFilename = config.instancesFile(tier)
+        datasetFilenames = config.datasetFiles(tier)
+        instancesFilename = config.instancesFile(tier)
 
         imgsInfoFilename = config.imgsInfoFile(tier)
         with open(imgsInfoFilename, "r") as file:
             imageIndex = json.load(file)
         instances = self.readData(
-            datasetFilename, instancesFilename, tier, train, imageIndex
-        )  # updateVocab =
-
+            datasetFilenames, instancesFilename, tier, train, imageIndex
+        )
         images = {
             tier: {
                 "imagesFilename": imagesFilename,
@@ -1084,7 +1093,7 @@ class Preprocesser(object):
             }
         }
 
-        return {"instances": instances, "images": images, "train": train}  #
+        return {"instances": instances, "images": images, "train": train}
 
     """
     Reads all tiers of a dataset (train if exists, val, test).
