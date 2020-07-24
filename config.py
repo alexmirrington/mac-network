@@ -29,6 +29,10 @@ class Config(object):
     expPathname = "{expName}"
     expName = ""  # will be assigned through argparse
 
+    # wandb
+    wandbEntity = ""
+    wandbProject = ""
+
     weightsPath = "./"
     weightsFilename = "weights{epoch}.ckpt"
 
@@ -207,7 +211,18 @@ def parseArgs():
 
     # experiment files
     parser.add_argument(
-        "--expName", default="experiment", type=str, help="experiment name"
+        "--expName",
+        default="experiment",
+        type=str,
+        required=True,
+        help="experiment name",
+    )
+    # wandb logging
+    parser.add_argument(
+        "--wandbEntity", default="", type=str, help="wandb entity to save logs to",
+    )
+    parser.add_argument(
+        "--wandbProject", default="", type=str, help="wandb project to save logs to",
     )
 
     # data files

@@ -13,6 +13,7 @@ from collections import defaultdict
 import h5py
 import numpy as np
 import tensorflow as tf
+import wandb
 from termcolor import colored
 
 from config import config, loadDatasetConfig, parseArgs
@@ -61,6 +62,21 @@ def logRecord(epoch, epochTime, lr, trainRes, evalRes, extraEvalRes):
         record += [epochTime, lr]
 
         writelist(outFile, record)
+
+
+# Writes log record to file
+def logRecordWandb(epoch, epochTime, lr, trainRes, evalRes, extraEvalRes):
+    if wandb.run is not None:
+        record = {
+            "epoch": epoch,
+            "time": epochTime,
+            "learning_rate": lr,
+            "train_accuracy": trainRes["acc"],
+            "validation_accuracy": evalRes["val"]["acc"],
+            "train_loss": trainRes["loss"],
+            "validation_loss": evalRes["val"]["loss"],
+        }
+        wandb.log(record)
 
 
 # Gets last logged epoch and learning rate
@@ -900,6 +916,9 @@ def main():
                     writePreds(preprocessor, evalRes, extraEvalRes)
 
                 logRecord(epoch, epochTime, config.lr, trainRes, evalRes, extraEvalRes)
+                logRecordWandb(
+                    epoch, epochTime, config.lr, trainRes, evalRes, extraEvalRes
+                )
 
                 # update best result
                 # compute curr and prior
@@ -1036,5 +1055,21 @@ def main():
 
 if __name__ == "__main__":
     parseArgs()
+
+    # Initialise wandb
+    if config.wandbProject != "":
+        kwargs = {
+            "name": config.expName,
+            "project": config.wandbProject,
+            "config": config,
+        }
+        if config.wandbEntity != "":
+            kwargs.update({"entity": config.wandbEntity})
+        wandb.init(**kwargs)
+        wandb.save(os.path.join(config.weightsDir(), "**", "*"))
+        wandb.save(os.path.join(config.predsDir(), "**", "*"))
+        wandb.save(os.path.join(config.logDir(), "**", "*"))
+        wandb.save(os.path.join(config.configDir(), "**", "*"))
+
     loadDatasetConfig[config.dataset]()
     main()
