@@ -1,7 +1,8 @@
-# Data and output folders
+# Cache, data and output folders
 data
 results
 wandb
+.cache
 
 # Docker
 .dockerignore
@@ -12,12 +13,7 @@ Makefile
 .pre-commit-config.yaml
 .isort.cfg
 .flake8
-.gitignore
 .vscode
-
-# .git and .cache folders
-.git
-.cache
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
